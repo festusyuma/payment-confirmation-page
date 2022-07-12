@@ -4,6 +4,14 @@ import { defineNuxtConfig } from 'nuxt'
 export default defineNuxtConfig({
   css: ['@/assets/css/main.scss'],
 
+  ssr: false,
+
+  head: {
+    link: [
+      { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+    ]
+  },
+
   typescript: {
     typeCheck: true,
     strict: true
@@ -26,6 +34,7 @@ export default defineNuxtConfig({
   },
 
   publicRuntimeConfig: {
+    baseUrl: process.env.BASE_URL,
     hostname: process.env.HOSTNAME,
     socketUrl: process.env.SOCKET_URL
   }

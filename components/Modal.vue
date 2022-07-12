@@ -1,7 +1,7 @@
 <template>
   <div class="modal" :class="modalData.status">
     <div class="icon-cover">
-      <Spinner v-if="modalData.status === PaymentStatus.PENDING" class="spinner"/>
+      <IconSpinner v-if="modalData.status === PaymentStatus.PENDING" class="spinner"/>
       <img v-if="modalData.status === PaymentStatus.SUCCESS" src="@/assets/icons/checked.png" alt="icon"/>
       <img v-if="modalData.status === PaymentStatus.FAILED" src="@/assets/icons/cancel.png" alt="icon"/>
     </div>
@@ -15,20 +15,20 @@
 </template>
 
 <script setup lang="ts">
-import {useRuntimeConfig, useState, watch} from "#imports";
 import {ModalData, PaymentStatus} from "~/types";
-import Spinner from "~/components/Icon/Spinner.vue";
 
 interface Props {
-  modalData: ModalData,
+  modalData?: ModalData,
 }
 
 const config = useRuntimeConfig()
+const emit = defineEmits(['countdownComplete'])
 const props = withDefaults(defineProps<Props>(), {})
+
 const countdown = useState('countdown', () => 5)
 const countdownInterval = useState<any>('countdownInterval', () => null)
 
-watch(() => props.modalData.status, (value) => {
+watch(() => props.modalData?.status, (value) => {
   if (value !== PaymentStatus.PENDING) {
     if (countdownInterval) {
       clearInterval(countdownInterval.value)
@@ -39,6 +39,7 @@ watch(() => props.modalData.status, (value) => {
       countdown.value--
       if (countdown.value === 0) {
         clearInterval(countdownInterval.value)
+        emit('countdownComplete')
       }
     }, 1000)
   }

@@ -1,6 +1,6 @@
 <template>
   <div class="body">
-    <Modal :modal-data="modalData" @countdownComplete="countdownComplete" />
+    <Modal v-if="modalData" :modal-data="modalData" @countdownComplete="countdownComplete" />
   </div>
 </template>
 
@@ -12,8 +12,7 @@
 
 <script setup lang="ts">
 import {io, Socket} from 'socket.io-client'
-import {computed, onMounted, onUnmounted, ref, useRoute, useRouter, useRuntimeConfig, useState} from "#imports";
-import {ModalData, PaymentResponse, PaymentStatus} from "~/types";
+import {ModalData, PaymentStatus, Transaction} from "~/types";
 import Modal from "~/components/Modal.vue";
 
 const config = useRuntimeConfig();
@@ -36,31 +35,53 @@ const messages = ref({
 })
 
 const socket = useState<Socket | null>('socket', () => null)
-const modalData = computed<ModalData>(() => {
-  const status = route.query.status as PaymentStatus
-  return {status, ...messages.value[status]}
+const transaction = useState<Transaction | null>('transaction', () => null)
+
+const modalData = computed<ModalData | null>(() => {
+  const currentTransaction = transaction.value
+  if (!currentTransaction) return null
+  return {
+    status: currentTransaction.status,
+    ...messages.value[currentTransaction.status]
+  }
 })
 
-onMounted(() => {
-  const {reference, email} = route.query
-  const connectSocket = io(config.socketUrl, {
-    reconnectionDelay: 5000,
-    reconnectionDelayMax: 10000,
-    reconnectionAttempts: 5,
-    auth: { email }
-  })
+const {data: transactionRes} = useTransaction(route.query.reference as string)
 
-  connectSocket.on('paymentStatus', (data: PaymentResponse) => {
-    const {status, reference: resReference} = data
-    if (reference === resReference)
-      router.push({
-        path: '/',
-        query: { status, reference, email }
-      })
-  })
-
-  socket.value = connectSocket
+watch(transactionRes, ({data}) => {
+  if (data) transaction.value = data
 })
+
+watch(transaction, (currentTransaction) => {
+  if (!currentTransaction) return
+
+  const {status, reference} = currentTransaction
+  const {email} = route.query
+
+  if (currentTransaction.status === PaymentStatus.PENDING) {
+    if (socket.value) socket.value.disconnect
+    const connectSocket = io(config.socketUrl, {
+      reconnectionDelay: 5000,
+      reconnectionDelayMax: 10000,
+      reconnectionAttempts: 5,
+      auth: { email }
+    })
+
+    connectSocket.on(
+        'paymentStatus',
+        ({status, reference: resReference}: Transaction) => {
+          if (reference === resReference && transaction.value)
+            transaction.value.status = status
+        })
+
+    socket.value = connectSocket
+  }
+
+  router.push({
+    path: '/',
+    query: { status, reference, email }
+  })
+}, { deep: true })
 
 onUnmounted(() => {
   socket.value?.disconnect()
@@ -71,9 +92,11 @@ onUnmounted(() => {
 
 <script lang="ts">
 export default {
+  name: "IndexPage",
+
   methods: {
     countdownComplete() {
-
+      console.log('redirected')
     }
   }
 }

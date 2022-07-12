@@ -1,3 +1,9 @@
+export interface ApiResponse<T = any> {
+  status: boolean
+  message: string
+  data?: T
+}
+
 export interface ModalData {
   title: string
   message: string
@@ -10,7 +16,8 @@ export enum PaymentStatus {
   FAILED = 'failed',
 }
 
-export interface PaymentResponse {
+export interface Transaction {
   status: PaymentStatus
   reference: string
+  type: string
 }
