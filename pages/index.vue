@@ -63,7 +63,6 @@ watch(transaction, (currentTransaction) => {
     const connectSocket = io(config.socketUrl, {
       reconnectionDelay: 5000,
       reconnectionDelayMax: 10000,
-      reconnectionAttempts: 5,
       auth: { email }
     })
 
