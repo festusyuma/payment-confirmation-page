@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   css: ['@/assets/css/main.scss'],
 
   ssr: false,
+  target: 'static',
 
   head: {
     link: [
@@ -37,5 +38,9 @@ export default defineNuxtConfig({
     baseUrl: process.env.BASE_URL,
     hostname: process.env.HOSTNAME,
     socketUrl: process.env.SOCKET_URL
+  },
+
+  server: {
+    port: Number(process.env.PORT) || 3000,
   }
 })
