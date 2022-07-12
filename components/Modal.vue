@@ -18,7 +18,7 @@
 import {ModalData, PaymentStatus} from "~/types";
 
 interface Props {
-  modalData?: ModalData,
+  modalData: ModalData | null,
 }
 
 const config = useRuntimeConfig()
@@ -28,6 +28,21 @@ const props = withDefaults(defineProps<Props>(), {})
 const countdown = useState('countdown', () => 5)
 const countdownInterval = useState<any>('countdownInterval', () => null)
 
+const startCountdown = () => {
+  countdownInterval.value = setInterval(() => {
+    countdown.value--
+    if (countdown.value === 0) {
+      clearInterval(countdownInterval.value)
+      emit('countdownComplete')
+    }
+  }, 1000)
+}
+
+onMounted(() => {
+  if (props.modalData?.status !== PaymentStatus.PENDING)
+    startCountdown()
+})
+
 watch(() => props.modalData?.status, (value) => {
   if (value !== PaymentStatus.PENDING) {
     if (countdownInterval) {
@@ -35,13 +50,7 @@ watch(() => props.modalData?.status, (value) => {
       countdown.value = 5
     }
 
-    countdownInterval.value = setInterval(() => {
-      countdown.value--
-      if (countdown.value === 0) {
-        clearInterval(countdownInterval.value)
-        emit('countdownComplete')
-      }
-    }, 1000)
+    startCountdown()
   }
 })
 </script>
