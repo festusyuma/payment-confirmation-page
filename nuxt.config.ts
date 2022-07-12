@@ -6,10 +6,12 @@ export default defineNuxtConfig({
 
   ssr: false,
 
-  head: {
-    link: [
-      { rel: 'icon', type: 'image/png', href: '/favicon.png' }
-    ]
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' }
+      ]
+    }
   },
 
   typescript: {
