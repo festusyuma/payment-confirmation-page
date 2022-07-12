@@ -39,7 +39,11 @@ const transaction = useState<Transaction | null>('transaction', () => null)
 
 const modalData = computed<ModalData | null>(() => {
   const currentTransaction = transaction.value
-  if (!currentTransaction) return null
+  if (!currentTransaction) return {
+    status: PaymentStatus.PENDING,
+    ...messages.value[PaymentStatus.PENDING]
+  }
+
   return {
     status: currentTransaction.status,
     ...messages.value[currentTransaction.status]
