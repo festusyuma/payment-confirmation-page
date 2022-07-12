@@ -46,41 +46,44 @@ const modalData = computed<ModalData | null>(() => {
   }
 })
 
-const {data: transactionRes} = useTransaction(route.query.reference as string)
-
-watch(transactionRes, ({data}) => {
-  if (data) transaction.value = data
-})
-
 watch(transaction, (currentTransaction) => {
   if (!currentTransaction) return
 
   const {status, reference} = currentTransaction
   const {email} = route.query
 
-  if (currentTransaction.status === PaymentStatus.PENDING) {
-    if (socket.value) socket.value.disconnect
-    const connectSocket = io(config.socketUrl, {
-      reconnectionDelay: 5000,
-      reconnectionDelayMax: 10000,
-      auth: { email }
-    })
-
-    connectSocket.on(
-        'paymentStatus',
-        ({status, reference: resReference}: Transaction) => {
-          if (reference === resReference && transaction.value)
-            transaction.value.status = status
-        })
-
-    socket.value = connectSocket
-  }
-
   router.push({
     path: '/',
     query: { status, reference, email }
   })
 }, { deep: true })
+
+onMounted(() => {
+  const {email, reference} = route.query
+
+  const connectSocket = io(config.socketUrl, {
+    reconnectionDelay: 5000,
+    reconnectionDelayMax: 10000,
+    auth: { email }
+  })
+
+  connectSocket.on('connect', () => {
+    const {data: transactionRes} = useTransaction(reference as string)
+
+    watch(transactionRes, ({data}) => {
+      if (data) transaction.value = data
+    })
+  })
+
+  connectSocket.on(
+      'paymentStatus',
+      ({status, reference: resReference}: Transaction) => {
+        if (reference === resReference && transaction.value)
+          transaction.value.status = status
+      })
+
+  socket.value = connectSocket
+})
 
 onUnmounted(() => {
   socket.value?.disconnect()
