@@ -5,7 +5,7 @@ const pm2App = (name, port) => ({
   instances: 1,
   script: 'serve',
   env: {
-    PM2_SERVE_PATH: './.output/public',
+    PM2_SERVE_PATH: './.output',
     PM2_SERVE_PORT: port,
     PM2_SERVE_SPA: 'true',
   }
